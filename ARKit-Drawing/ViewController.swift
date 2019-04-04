@@ -14,7 +14,7 @@ class ViewController: UIViewController {
     
     var objectMode: ObjectPlacementMode = .freeform {
         didSet {
-            removePlaneNode()  
+            removePlaneNode()
             reloadConfiguration()
         }
     }
@@ -23,8 +23,6 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        configuration.planeDetection = .horizontal
         
         sceneView.delegate = self
         sceneView.autoenablesDefaultLighting = true
@@ -108,7 +106,7 @@ extension ViewController {
             
             case .freeform:
                 
-                inFrontAddNode(node: node)
+                inFrontAddNode(node)
             
             case .plane:
             
@@ -123,6 +121,7 @@ extension ViewController {
     
     func reloadConfiguration() {
         configuration.detectionImages = objectMode == .image ? ARReferenceImage.referenceImages(inGroupNamed: "AR Resources", bundle: nil) : nil
+        configuration.planeDetection = objectMode == .plane ? .horizontal : .init()
         sceneView.session.run(configuration)
     }
     
@@ -193,7 +192,7 @@ extension ViewController {
         
     }
     
-    func inFrontAddNode(node: SCNNode) {
+    func inFrontAddNode(_ node: SCNNode) {
         
         guard let cameraTransform = sceneView.session.currentFrame?.camera.transform else { return }
         
@@ -227,9 +226,7 @@ extension ViewController: ARSCNViewDelegate {
             
         } else if let planeAnchor = anchor as? ARPlaneAnchor {
             
-            if objectMode == .plane {
-                nodeAdded(node, for: planeAnchor)
-            }
+            nodeAdded(node, for: planeAnchor)
             
         }
         
@@ -241,9 +238,7 @@ extension ViewController: ARSCNViewDelegate {
         
         guard let planeNode = node.childNodes.first else { return }
         
-        if objectMode == .plane {
-            updatePlaneNode(planeNode, for: planeAnchor)
-        }
+        updatePlaneNode(planeNode, for: planeAnchor)
         
     }
     
