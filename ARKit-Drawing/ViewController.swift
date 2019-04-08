@@ -6,6 +6,11 @@ class ViewController: UIViewController {
 
     @IBOutlet var sceneView: ARSCNView!
     
+    @IBOutlet weak var addedObjectsLabel: UILabel!
+    @IBOutlet weak var addedPlanesLabel: UILabel!
+    
+    var optionsViewController: OptionsContainerViewController?
+    
     let configuration = ARWorldTrackingConfiguration()
     
     enum ObjectPlacementMode {
@@ -14,12 +19,33 @@ class ViewController: UIViewController {
     
     var objectMode: ObjectPlacementMode = .freeform {
         didSet {
-            removePlaneNode()
             reloadConfiguration()
         }
     }
     
     var selectedNode: SCNNode?
+    
+    var objectsArray = [SCNNode]()
+    
+    var planesArray = [SCNNode]()
+    
+    var planeVisualization = false {
+        didSet {
+            planesArray.forEach { node in
+                node.isHidden = !planeVisualization
+            }
+        }
+    }
+    
+    private var distance: Float {
+        get {
+            if optionsViewController?.selectedOption == .addShape {
+                return selectedNode!.boundingSphere.radius
+            }
+            return 0.1
+        }
+        
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,7 +54,6 @@ class ViewController: UIViewController {
         sceneView.autoenablesDefaultLighting = true
         sceneView.debugOptions = .showWorldOrigin
         
-        addGestureRecognizer()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -46,10 +71,13 @@ class ViewController: UIViewController {
         switch sender.selectedSegmentIndex {
         case 0:
             objectMode = .freeform
+            planeVisualization = false
         case 1:
             objectMode = .plane
+            planeVisualization = true
         case 2:
             objectMode = .image
+            planeVisualization = false
         default:
             break
         }
@@ -57,8 +85,9 @@ class ViewController: UIViewController {
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "showOptions" {
-            let optionsViewController = segue.destination as! OptionsContainerViewController
-            optionsViewController.delegate = self
+            let optionsVC = segue.destination as! OptionsContainerViewController
+            optionsVC.delegate = self
+            optionsViewController = optionsVC
         }
     }
 }
@@ -73,14 +102,47 @@ extension ViewController: OptionsViewControllerDelegate {
     }
     
     func togglePlaneVisualization() {
+        planeVisualization = !planeVisualization
         dismiss(animated: true, completion: nil)
     }
     
     func undoLastObject() {
         
+        let lastObject = objectsArray.last
+        lastObject?.removeFromParentNode()
+        objectsArray.removeLast()
+        
+        DispatchQueue.main.async {
+            self.addedObjectsLabel.text = "Added objects: \(self.objectsArray.count)"
+        }
+        
+        dismiss(animated: true, completion: nil)
     }
     
     func resetScene() {
+        
+        objectsArray.forEach { node in
+            node.removeFromParentNode()
+        }
+        
+        objectsArray.removeAll()
+        
+        planesArray.forEach { node in
+            node.removeFromParentNode()
+        }
+        
+        planesArray.removeAll()
+        
+        DispatchQueue.main.async {
+            self.addedPlanesLabel.text = "Added planes: \(self.planesArray.count)"
+        }
+        
+        DispatchQueue.main.async {
+            self.addedObjectsLabel.text = "Added objects: \(self.objectsArray.count)"
+        }
+        
+        reloadConfiguration(removeAnchors: true)
+        
         dismiss(animated: true, completion: nil)
     }
 }
@@ -89,60 +151,109 @@ extension ViewController: OptionsViewControllerDelegate {
 
 extension ViewController {
     
-    func addGestureRecognizer() {
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(gesture:)))
-        self.sceneView.addGestureRecognizer(tapGesture)
-        
-    }
-    
-    @objc func handleTap(gesture: UITapGestureRecognizer) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         
         guard let node = selectedNode else { return }
         
-        let location = gesture.location(in: sceneView)
+        guard let touch = touches.first else { return }
+        
+        let location = touch.location(in: sceneView)
         
         switch objectMode {
-            
             case .freeform:
-                
                 inFrontAddNode(node)
-            
             case .plane:
-            
-               addNode(node, to: location)
-            
+                addNode(node, toTouchPoint: location)
             case .image:
-                
                 break
         }
         
     }
     
-    func reloadConfiguration() {
-        configuration.detectionImages = objectMode == .image ? ARReferenceImage.referenceImages(inGroupNamed: "AR Resources", bundle: nil) : nil
-        configuration.planeDetection = objectMode == .plane ? .horizontal : .init()
-        sceneView.session.run(configuration)
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    
+        guard let node = selectedNode else { return }
+        
+        guard let touch = touches.first else { return }
+        
+        let location = touch.location(in: sceneView)
+        
+        addNode(node, toTouchPoint: location)
+        
     }
     
-    func addNode(_ node: SCNNode, to location: CGPoint) {
+    func reloadConfiguration(removeAnchors: Bool = false) {
+        configuration.detectionImages = objectMode == .image ? ARReferenceImage.referenceImages(inGroupNamed: "AR Resources", bundle: nil) : nil
+        configuration.planeDetection = [.horizontal, .vertical]
         
-        let results = sceneView.hitTest(location, types: .existingPlaneUsingExtent)
+        if removeAnchors {
+            sceneView.session.run(configuration, options: .removeExistingAnchors)
+        } else {
+           sceneView.session.run(configuration)
+        }
+    }
+    
+    func addNode(_ node: SCNNode, toTouchPoint point: CGPoint) {
         
-        guard let result = results.first else { return }
+        func getTranslateForARResult(result: ARHitTestResult) -> SCNVector3 {
+            let transform = result.worldTransform
+            let translate = transform.columns.3
+            let x = translate.x
+            let y = translate.y
+            let z = translate.z
+            
+            return SCNVector3(x, y, z)
+        }
         
-        node.simdTransform = result.worldTransform
+        switch objectMode {
+        case .freeform:
+            let results = sceneView.hitTest(point, types: .featurePoint)
+            guard let result = results.first else { return }
+            node.position = getTranslateForARResult(result: result)
+        case .plane:
+            let results = sceneView.hitTest(point, types: .existingPlaneUsingExtent)
+            guard let result = results.first else { return }
+            node.position = getTranslateForARResult(result: result)
+        case .image: 
+            let results = sceneView.hitTest(point, options: [.searchMode : 1])
+            guard let result = results.first else { return }
+            guard let _ = sceneView.anchor(for: result.node) as? ARImageAnchor  else {
+                return
+            }
+            node.position = result.worldCoordinates
+        }
+        
+        let last = objectsArray.last
+        
+        if last != nil {
+            
+            let lastCenter = last!.convertPosition(last!.boundingSphere.center, to: sceneView.scene.rootNode)
+            let nextCenter = node.convertPosition(node.boundingSphere.center, to: sceneView.scene.rootNode)
+            
+            if (abs(abs(lastCenter.x) - abs(nextCenter.x)) < distance) &&
+                (abs(abs(lastCenter.y) - abs(nextCenter.y)) < distance) &&
+                (abs(abs(lastCenter.z) - abs(nextCenter.z)) < distance) {
+                return
+            }
+            
+        }
         
         let parentNode = sceneView.scene.rootNode
         
-        addNode(node, to: parentNode)
+        addNode(node, toParentNode: parentNode)
     }
     
     func nodeAdded(_ node: SCNNode, for anchor: ARImageAnchor) {
         
         guard let selectedNode = selectedNode else { return }
         
-        addNode(selectedNode, to: node)
+        let node1 = SCNNode(geometry: SCNPlane(width: anchor.referenceImage.physicalSize.width, height: anchor.referenceImage.physicalSize.height))
+        node1.eulerAngles.x = -.pi / 2
+        node1.opacity = 0.01
+        
+        addNode(node1, toParentNode: node)
+        
+        addNode(selectedNode, toParentNode: node)
         
     }
     
@@ -150,7 +261,9 @@ extension ViewController {
         
         let planeNode = createPlaneNode(for: anchor)
         
-        addNode(planeNode, to: node)
+        planeNode.isHidden = !planeVisualization
+        
+        addNode(planeNode, toParentNode: node)
         
     }
     
@@ -161,24 +274,11 @@ extension ViewController {
         geometry.firstMaterial?.diffuse.contents = UIColor.blue
         
         let planeNode = SCNNode(geometry: geometry)
-        planeNode.name = "Plane"
         planeNode.opacity = 0.3
         planeNode.eulerAngles.x = -.pi / 2
         planeNode.position = SCNVector3(anchor.center.x, 0, anchor.center.z)
         
         return planeNode
-    }
-    
-    func removePlaneNode() {
-        
-        sceneView.scene.rootNode.enumerateChildNodes{ node, _ in
-            
-            if node.name == "Plane" {
-                node.removeFromParentNode()
-            }
-            
-        }
-        
     }
     
     func updatePlaneNode(_ node: SCNNode, for anchor: ARPlaneAnchor) {
@@ -204,14 +304,26 @@ extension ViewController {
         
         let parentNode = sceneView.scene.rootNode
         
-        addNode(node, to: parentNode)
+        addNode(node, toParentNode: parentNode)
         
     }
     
     
-    func addNode(_ node: SCNNode, to parentNode: SCNNode) {
-        let cloneNode = node.clone()
-        parentNode.addChildNode(cloneNode)
+    func addNode(_ node: SCNNode, toParentNode parentNode: SCNNode) {
+        if node.geometry is SCNPlane {
+            parentNode.addChildNode(node)
+            planesArray.append(node)
+            DispatchQueue.main.async {
+               self.addedPlanesLabel.text = "Added planes: \(self.planesArray.count)"
+            }
+        } else {
+            let cloneNode = node.clone()
+            parentNode.addChildNode(cloneNode)
+            objectsArray.append(cloneNode)
+            DispatchQueue.main.async {
+               self.addedObjectsLabel.text = "Added objects: \(self.objectsArray.count)"
+            }
+        }
     }
 
 }

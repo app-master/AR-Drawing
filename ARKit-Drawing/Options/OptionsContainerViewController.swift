@@ -13,6 +13,8 @@ class OptionsContainerViewController: UIViewController, UINavigationControllerDe
     private var shape: Shape!
     private var color: UIColor!
     
+    var selectedOption: ShapeOption?
+    
     private var nav: UINavigationController?
     
     weak var delegate: OptionsViewControllerDelegate?
@@ -44,8 +46,10 @@ class OptionsContainerViewController: UIViewController, UINavigationControllerDe
             
             switch option {
             case .addShape:
+                self.selectedOption = .addShape
                 self.nav?.pushViewController(self.shapePicker(), animated: true)
             case .addScene:
+                self.selectedOption = .addScene
                 self.nav?.pushViewController(self.scenePicker(), animated: true)
             case .togglePlane:
                 self.delegate?.togglePlaneVisualization()

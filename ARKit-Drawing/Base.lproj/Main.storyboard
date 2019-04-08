@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14087.3" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BV1-FR-VrT">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BV1-FR-VrT">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14075.4"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -103,21 +102,41 @@
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
                             </visualEffectView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Added objects" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cDE-m7-gJs">
+                                <rect key="frame" x="16" y="35" width="111" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Added Planes" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="mn1-qF-s8S">
+                                <rect key="frame" x="16" y="64" width="105.5" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="ZCE-wD-2E2" firstAttribute="trailing" secondItem="Hss-D4-YVK" secondAttribute="trailing" id="9BF-a4-DTs"/>
                             <constraint firstItem="ZCE-wD-2E2" firstAttribute="bottom" secondItem="Hss-D4-YVK" secondAttribute="bottom" id="9oE-EN-HGn"/>
+                            <constraint firstItem="ZCE-wD-2E2" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="mn1-qF-s8S" secondAttribute="trailing" constant="15" id="A1s-dp-Qvf"/>
                             <constraint firstItem="ZCE-wD-2E2" firstAttribute="bottom" secondItem="nGv-ui-K4i" secondAttribute="bottom" constant="20" id="EI9-ck-jaV"/>
                             <constraint firstItem="Hss-D4-YVK" firstAttribute="top" secondItem="ZCE-wD-2E2" secondAttribute="top" id="OgV-19-dSa"/>
                             <constraint firstItem="ZCE-wD-2E2" firstAttribute="bottom" secondItem="RK5-mG-jKn" secondAttribute="bottom" constant="20" id="Pfd-Nb-YUs"/>
                             <constraint firstItem="RK5-mG-jKn" firstAttribute="leading" secondItem="ZCE-wD-2E2" secondAttribute="leading" constant="16" id="SnR-GG-ypT"/>
+                            <constraint firstItem="mn1-qF-s8S" firstAttribute="leading" secondItem="ZCE-wD-2E2" secondAttribute="leading" constant="16" id="VU3-02-op0"/>
+                            <constraint firstItem="mn1-qF-s8S" firstAttribute="top" secondItem="cDE-m7-gJs" secondAttribute="bottom" constant="8" id="Vqs-xv-6uq"/>
                             <constraint firstItem="ZCE-wD-2E2" firstAttribute="trailing" secondItem="nGv-ui-K4i" secondAttribute="trailing" constant="17" id="i2L-km-UXq"/>
+                            <constraint firstItem="cDE-m7-gJs" firstAttribute="leading" secondItem="ZCE-wD-2E2" secondAttribute="leading" constant="16" id="nQW-Sq-ZGq"/>
                             <constraint firstItem="Hss-D4-YVK" firstAttribute="leading" secondItem="ZCE-wD-2E2" secondAttribute="leading" id="tq9-FB-eeV"/>
+                            <constraint firstItem="ZCE-wD-2E2" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="cDE-m7-gJs" secondAttribute="trailing" constant="15" id="u5Q-Hr-qao"/>
+                            <constraint firstItem="cDE-m7-gJs" firstAttribute="top" secondItem="ZCE-wD-2E2" secondAttribute="top" constant="15" id="vaz-JO-yb7"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="ZCE-wD-2E2"/>
                     </view>
                     <connections>
+                        <outlet property="addedObjectsLabel" destination="cDE-m7-gJs" id="kvH-qt-giN"/>
+                        <outlet property="addedPlanesLabel" destination="mn1-qF-s8S" id="f2e-kk-I5q"/>
                         <outlet property="sceneView" destination="Hss-D4-YVK" id="9bm-dS-QB2"/>
                     </connections>
                 </viewController>
