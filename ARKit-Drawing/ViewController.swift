@@ -42,7 +42,7 @@ class ViewController: UIViewController {
             if optionsViewController?.selectedOption == .addShape {
                 return selectedNode!.boundingSphere.radius
             }
-            return 0.1
+            return 0.05
         }
         
     }
@@ -87,6 +87,7 @@ class ViewController: UIViewController {
         if segue.identifier == "showOptions" {
             let optionsVC = segue.destination as! OptionsContainerViewController
             optionsVC.delegate = self
+            optionsVC.selectedOption = optionsViewController?.selectedOption
             optionsViewController = optionsVC
         }
     }
